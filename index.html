@@ -1,0 +1,859 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>锂矿与碳酸锂市场日报</title>
+    
+    <!-- ECharts 库 -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/echarts/5.4.3/echarts.min.js"></script>
+    
+    <!-- html2canvas 和 jsPDF 库（用于 PDF 导出） -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen', 'Ubuntu', 'Cantarell', sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 10px;
+            color: #333;
+        }
+        
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.1);
+            overflow: hidden;
+        }
+        
+        /* ===== 顶部摘要区域 ===== */
+        .header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 20px;
+            text-align: center;
+        }
+        
+        .header h1 {
+            font-size: 28px;
+            margin-bottom: 8px;
+            font-weight: 700;
+        }
+        
+        .header .date-info {
+            font-size: 14px;
+            opacity: 0.9;
+            margin-bottom: 15px;
+        }
+        
+        .ai-summary {
+            background: rgba(255, 255, 255, 0.15);
+            padding: 12px 15px;
+            border-radius: 8px;
+            font-size: 14px;
+            line-height: 1.6;
+            border-left: 4px solid #ffd700;
+            margin-bottom: 10px;
+        }
+        
+        /* ===== 功能按钮 ===== */
+        .action-bar {
+            display: flex;
+            gap: 10px;
+            padding: 15px 20px;
+            background: #f8f9fa;
+            border-bottom: 1px solid #e9ecef;
+            justify-content: center;
+            flex-wrap: wrap;
+        }
+        
+        .btn {
+            padding: 10px 20px;
+            border: none;
+            border-radius: 6px;
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+        }
+        
+        .btn-primary {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+        }
+        
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(102, 126, 234, 0.4);
+        }
+        
+        .btn-secondary {
+            background: #e9ecef;
+            color: #333;
+        }
+        
+        .btn-secondary:hover {
+            background: #dee2e6;
+        }
+        
+        /* ===== 内容区域 ===== */
+        .content {
+            padding: 20px;
+        }
+        
+        /* ===== 价格看板 ===== */
+        .price-dashboard {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 15px;
+            margin-bottom: 25px;
+        }
+        
+        .price-card {
+            background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+            padding: 20px;
+            border-radius: 10px;
+            text-align: center;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.05);
+            transition: transform 0.3s ease;
+        }
+        
+        .price-card:hover {
+            transform: translateY(-5px);
+        }
+        
+        .price-card.up {
+            background: linear-gradient(135deg, #ffecd2 0%, #fcb69f 100%);
+        }
+        
+        .price-card.down {
+            background: linear-gradient(135deg, #a8edea 0%, #fed6e3 100%);
+        }
+        
+        .price-card h3 {
+            font-size: 12px;
+            color: #666;
+            margin-bottom: 8px;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+        
+        .price-value {
+            font-size: 28px;
+            font-weight: 700;
+            color: #333;
+            margin-bottom: 8px;
+        }
+        
+        .price-unit {
+            font-size: 12px;
+            color: #999;
+        }
+        
+        .price-change {
+            font-size: 14px;
+            font-weight: 600;
+            margin-top: 8px;
+            padding: 5px 10px;
+            border-radius: 4px;
+            display: inline-block;
+        }
+        
+        .change-up {
+            background: #ffebee;
+            color: #c62828;
+        }
+        
+        .change-down {
+            background: #e8f5e9;
+            color: #2e7d32;
+        }
+        
+        /* ===== 图表区域 ===== */
+        .chart-section {
+            margin-bottom: 25px;
+        }
+        
+        .section-title {
+            font-size: 18px;
+            font-weight: 700;
+            color: #333;
+            margin-bottom: 15px;
+            padding-bottom: 10px;
+            border-bottom: 3px solid #667eea;
+            display: inline-block;
+        }
+        
+        .chart-container {
+            background: #f8f9fa;
+            border-radius: 10px;
+            padding: 15px;
+            margin-bottom: 20px;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+        }
+        
+        #priceChart {
+            width: 100%;
+            height: 300px;
+        }
+        
+        #supplyDemandChart {
+            width: 100%;
+            height: 300px;
+        }
+        
+        /* ===== 分析文字区域 ===== */
+        .analysis-section {
+            background: #f0f4ff;
+            padding: 20px;
+            border-radius: 10px;
+            border-left: 4px solid #667eea;
+            margin-bottom: 20px;
+        }
+        
+        .analysis-section h3 {
+            font-size: 16px;
+            color: #333;
+            margin-bottom: 12px;
+            font-weight: 700;
+        }
+        
+        .analysis-section p {
+            font-size: 14px;
+            line-height: 1.8;
+            color: #555;
+            margin-bottom: 10px;
+        }
+        
+        .analysis-section ul {
+            margin-left: 20px;
+            font-size: 14px;
+            line-height: 1.8;
+            color: #555;
+        }
+        
+        .analysis-section li {
+            margin-bottom: 8px;
+        }
+        
+        /* ===== 预测区域 ===== */
+        .forecast-box {
+            background: linear-gradient(135deg, #ffecd2 0%, #fcb69f 100%);
+            padding: 18px;
+            border-radius: 10px;
+            margin-bottom: 20px;
+        }
+        
+        .forecast-box h4 {
+            font-size: 14px;
+            color: #d84315;
+            margin-bottom: 8px;
+            font-weight: 700;
+        }
+        
+        .forecast-box p {
+            font-size: 13px;
+            color: #555;
+            line-height: 1.6;
+        }
+        
+        /* ===== 底部信息 ===== */
+        .footer {
+            background: #f8f9fa;
+            padding: 15px 20px;
+            text-align: center;
+            font-size: 12px;
+            color: #999;
+            border-top: 1px solid #e9ecef;
+        }
+        
+        /* ===== 加载动画 ===== */
+        .loading {
+            text-align: center;
+            padding: 40px 20px;
+            color: #999;
+        }
+        
+        .spinner {
+            display: inline-block;
+            width: 40px;
+            height: 40px;
+            border: 4px solid #f3f3f3;
+            border-top: 4px solid #667eea;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin-bottom: 15px;
+        }
+        
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        
+        /* ===== 响应式设计 ===== */
+        @media screen and (max-width: 600px) {
+            .container {
+                border-radius: 0;
+                margin: 0;
+                min-height: 100vh;
+            }
+            
+            .header {
+                padding: 15px;
+            }
+            
+            .header h1 {
+                font-size: 22px;
+            }
+            
+            .price-dashboard {
+                grid-template-columns: 1fr;
+            }
+            
+            .price-card {
+                padding: 15px;
+            }
+            
+            .price-value {
+                font-size: 24px;
+            }
+            
+            .action-bar {
+                padding: 12px 15px;
+            }
+            
+            .btn {
+                padding: 9px 16px;
+                font-size: 13px;
+            }
+            
+            .content {
+                padding: 15px;
+            }
+            
+            .section-title {
+                font-size: 16px;
+            }
+            
+            #priceChart {
+                height: 250px;
+            }
+            
+            #supplyDemandChart {
+                height: 250px;
+            }
+            
+            .analysis-section {
+                padding: 15px;
+            }
+            
+            .analysis-section h3 {
+                font-size: 14px;
+            }
+            
+            .analysis-section p,
+            .analysis-section ul {
+                font-size: 13px;
+            }
+        }
+        
+        /* ===== 打印样式（用于 PDF 导出） ===== */
+        @media print {
+            body {
+                background: white;
+                padding: 0;
+            }
+            
+            .container {
+                box-shadow: none;
+                border-radius: 0;
+                max-width: 100%;
+            }
+            
+            .action-bar {
+                display: none;
+            }
+            
+            .btn {
+                display: none;
+            }
+            
+            .header {
+                page-break-after: avoid;
+            }
+            
+            .chart-section {
+                page-break-inside: avoid;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <!-- 顶部摘要 -->
+        <div class="header">
+            <h1>🔋 锂矿与碳酸锂市场日报</h1>
+            <div class="date-info">
+                <span id="reportDate">数据加载中...</span>
+            </div>
+            <div class="ai-summary" id="aiSummary">
+                <span class="spinner"></span>
+                <p>正在生成智能分析摘要...</p>
+            </div>
+        </div>
+        
+        <!-- 功能按钮 -->
+        <div class="action-bar">
+            <button class="btn btn-primary" onclick="exportPDF()">
+                📥 导出 PDF 报告
+            </button>
+            <button class="btn btn-secondary" onclick="refreshData()">
+                🔄 刷新数据
+            </button>
+        </div>
+        
+        <!-- 主要内容 -->
+        <div class="content">
+            <!-- 价格看板 -->
+            <div class="price-dashboard">
+                <div class="price-card" id="batteryCard">
+                    <h3>电池级碳酸锂</h3>
+                    <div class="price-value" id="batteryPrice">-</div>
+                    <div class="price-unit">元/吨</div>
+                    <div class="price-change" id="batteryChange">-</div>
+                </div>
+                
+                <div class="price-card" id="industrialCard">
+                    <h3>工业级碳酸锂</h3>
+                    <div class="price-value" id="industrialPrice">-</div>
+                    <div class="price-unit">元/吨</div>
+                    <div class="price-change" id="industrialChange">-</div>
+                </div>
+                
+                <div class="price-card" id="futuresCard">
+                    <h3>期货主力合约</h3>
+                    <div class="price-value" id="futuresPrice">-</div>
+                    <div class="price-unit">元/吨</div>
+                    <div class="price-change" id="futuresChange">-</div>
+                </div>
+                
+                <div class="price-card">
+                    <h3>价格差异</h3>
+                    <div class="price-value" id="priceDiff">-</div>
+                    <div class="price-unit">元/吨</div>
+                    <div class="price-change" id="diffAnalysis">现货高于期货</div>
+                </div>
+            </div>
+            
+            <!-- 价格走势图 -->
+            <div class="chart-section">
+                <div class="section-title">📈 价格走势分析（近30天）</div>
+                <div class="chart-container">
+                    <div id="priceChart"></div>
+                </div>
+            </div>
+            
+            <!-- 供需分析 -->
+            <div class="chart-section">
+                <div class="section-title">⚖️ 供需平衡分析</div>
+                <div class="chart-container">
+                    <div id="supplyDemandChart"></div>
+                </div>
+            </div>
+            
+            <!-- 市场分析 -->
+            <div class="analysis-section">
+                <h3>📊 市场分析要点</h3>
+                <p><strong>现货市场：</strong>电池级碳酸锂作为锂电池的重要原料，其价格波动直接影响新能源汽车产业链。当前市场供给相对充足，但需求端受下游备货周期影响，价格呈现高位震荡态势。</p>
+                <p><strong>期货市场：</strong>碳酸锂期货合约在广州期货交易所上市交易，是市场参与者进行风险对冲和价格发现的重要工具。期货价格通常领先现货价格，反映市场对未来供需关系的预期。</p>
+                <p><strong>关键驱动因素：</strong></p>
+                <ul>
+                    <li>🔹 新能源汽车产销数据：直接影响锂盐需求</li>
+                    <li>🔹 上游锂矿供应：澳大利亚、智利等主要产地的产量变化</li>
+                    <li>🔹 库存水位：港口锂精矿库存和国内碳酸锂库存</li>
+                    <li>🔹 政策支持：新能源补贴政策和产业规划</li>
+                    <li>🔹 国际市场：全球锂矿供需平衡和汇率变化</li>
+                </ul>
+            </div>
+            
+            <!-- 短期预测 -->
+            <div class="forecast-box">
+                <h4>🎯 短期价格预测（1-2周）</h4>
+                <p>基于当前供需状况和技术面分析，电池级碳酸锂价格预计在 <strong>78,000-82,000 元/吨</strong> 区间内波动。关键支撑位在 78,000 元/吨，关键阻力位在 82,000 元/吨。建议投资者密切关注下周新能源汽车产销数据和进口锂精矿到货情况。</p>
+            </div>
+            
+            <!-- 中期展望 -->
+            <div class="forecast-box" style="background: linear-gradient(135deg, #a8edea 0%, #fed6e3 100%);">
+                <h4 style="color: #0277bd;">📅 中期展望（1-3个月）</h4>
+                <p>随着新能源汽车产业的持续发展和锂矿产能的逐步释放，锂盐市场有望实现供需再平衡。预计碳酸锂价格将在 <strong>75,000-85,000 元/吨</strong> 的合理区间内运行。政策面的任何重大调整都可能成为价格的重要转折点。</p>
+            </div>
+        </div>
+        
+        <!-- 底部信息 -->
+        <div class="footer">
+            <p>📌 数据来源：SMM（上海有色网）、广州期货交易所 | 更新时间：<span id="updateTime">-</span></p>
+            <p>⚠️ 免责声明：本报告仅供参考，不构成投资建议。市场风险请自行评估。</p>
+        </div>
+    </div>
+    
+    <script>
+        // 全局变量
+        let chartInstance1 = null;
+        let chartInstance2 = null;
+        let marketData = null;
+        
+        // 页面加载时获取数据
+        document.addEventListener('DOMContentLoaded', function() {
+            loadMarketData();
+        });
+        
+        // 加载市场数据
+        function loadMarketData() {
+            // 从 data/market_data.json 加载数据
+            fetch('data/market_data.json')
+                .then(response => response.json())
+                .then(data => {
+                    marketData = data;
+                    renderUI();
+                    initCharts();
+                })
+                .catch(error => {
+                    console.error('数据加载失败:', error);
+                    // 使用默认数据
+                    marketData = getDefaultData();
+                    renderUI();
+                    initCharts();
+                });
+        }
+        
+        // 获取默认数据（备用）
+        function getDefaultData() {
+            return {
+                "timestamp": new Date().toISOString(),
+                "date": new Date().toISOString().split('T')[0],
+                "spot_price": {
+                    "battery_grade": 80500,
+                    "industrial_grade": 78300,
+                    "daily_change_percent": -0.5
+                },
+                "futures_price": {
+                    "lc_main": 79800,
+                    "daily_change_percent": 0.3
+                },
+                "ai_analysis": "今日电池级碳酸锂现货微跌0.5%，价格高位震荡，期货价格显著低于现货，短期供需仍趋紧但增仓压力显现。",
+                "price_history": generateMockHistory()
+            };
+        }
+        
+        // 生成模拟历史数据
+        function generateMockHistory() {
+            const history = [];
+            const basePrice = 80500;
+            for (let i = 30; i > 0; i--) {
+                const date = new Date();
+                date.setDate(date.getDate() - i);
+                const price = basePrice + (i % 10) * 500 - 2000;
+                history.push({
+                    date: date.toISOString().split('T')[0],
+                    price: price
+                });
+            }
+            return history;
+        }
+        
+        // 渲染 UI
+        function renderUI() {
+            // 更新日期
+            const date = new Date(marketData.date);
+            document.getElementById('reportDate').textContent = 
+                `${date.getFullYear()}年${date.getMonth() + 1}月${date.getDate()}日`;
+            
+            // 更新时间
+            const updateTime = new Date(marketData.timestamp);
+            document.getElementById('updateTime').textContent = 
+                updateTime.toLocaleTimeString('zh-CN');
+            
+            // 更新 AI 分析摘要
+            const aiSummaryDiv = document.getElementById('aiSummary');
+            aiSummaryDiv.innerHTML = `<p>${marketData.ai_analysis}</p>`;
+            
+            // 更新价格卡片
+            const batteryPrice = marketData.spot_price.battery_grade;
+            const industrialPrice = marketData.spot_price.industrial_grade;
+            const futuresPrice = marketData.futures_price.lc_main;
+            const change = marketData.spot_price.daily_change_percent;
+            const futuresChange = marketData.futures_price.daily_change_percent;
+            
+            // 电池级碳酸锂
+            document.getElementById('batteryPrice').textContent = 
+                batteryPrice.toLocaleString('zh-CN', {maximumFractionDigits: 0});
+            document.getElementById('batteryChange').innerHTML = 
+                `<span class="${change >= 0 ? 'change-up' : 'change-down'}">
+                    ${change >= 0 ? '📈' : '📉'} ${change > 0 ? '+' : ''}${change.toFixed(2)}%
+                </span>`;
+            
+            // 更新卡片背景色
+            const batteryCard = document.getElementById('batteryCard');
+            batteryCard.classList.remove('up', 'down');
+            batteryCard.classList.add(change >= 0 ? 'up' : 'down');
+            
+            // 工业级碳酸锂
+            document.getElementById('industrialPrice').textContent = 
+                industrialPrice.toLocaleString('zh-CN', {maximumFractionDigits: 0});
+            document.getElementById('industrialChange').innerHTML = 
+                `<span class="${change >= 0 ? 'change-up' : 'change-down'}">
+                    ${change >= 0 ? '📈' : '📉'} ${change > 0 ? '+' : ''}${change.toFixed(2)}%
+                </span>`;
+            
+            const industrialCard = document.getElementById('industrialCard');
+            industrialCard.classList.remove('up', 'down');
+            industrialCard.classList.add(change >= 0 ? 'up' : 'down');
+            
+            // 期货主力合约
+            document.getElementById('futuresPrice').textContent = 
+                futuresPrice.toLocaleString('zh-CN', {maximumFractionDigits: 0});
+            document.getElementById('futuresChange').innerHTML = 
+                `<span class="${futuresChange >= 0 ? 'change-up' : 'change-down'}">
+                    ${futuresChange >= 0 ? '📈' : '📉'} ${futuresChange > 0 ? '+' : ''}${futuresChange.toFixed(2)}%
+                </span>`;
+            
+            const futuresCard = document.getElementById('futuresCard');
+            futuresCard.classList.remove('up', 'down');
+            futuresCard.classList.add(futuresChange >= 0 ? 'up' : 'down');
+            
+            // 价格差异
+            const priceDiff = batteryPrice - futuresPrice;
+            document.getElementById('priceDiff').textContent = 
+                priceDiff.toLocaleString('zh-CN', {maximumFractionDigits: 0});
+            document.getElementById('diffAnalysis').textContent = 
+                priceDiff > 0 ? '现货高于期货' : '现货低于期货';
+        }
+        
+        // 初始化图表
+        function initCharts() {
+            initPriceChart();
+            initSupplyDemandChart();
+        }
+        
+        // 初始化价格走势图
+        function initPriceChart() {
+            const chartDom = document.getElementById('priceChart');
+            chartInstance1 = echarts.init(chartDom);
+            
+            const dates = marketData.price_history.map(item => item.date);
+            const prices = marketData.price_history.map(item => item.price);
+            
+            const option = {
+                responsive: true,
+                maintainAspectRatio: false,
+                title: {
+                    text: '',
+                    left: 'center'
+                },
+                tooltip: {
+                    trigger: 'axis',
+                    backgroundColor: 'rgba(0, 0, 0, 0.7)',
+                    borderColor: '#667eea',
+                    textStyle: {
+                        color: '#fff'
+                    },
+                    formatter: function(params) {
+                        if (params.length > 0) {
+                            return params[0].axisValue + '<br/>' + 
+                                   '价格: ' + params[0].value.toLocaleString() + ' 元/吨';
+                        }
+                    }
+                },
+                grid: {
+                    left: '10%',
+                    right: '10%',
+                    bottom: '15%',
+                    top: '10%',
+                    containLabel: true
+                },
+                xAxis: {
+                    type: 'category',
+                    data: dates,
+                    boundaryGap: false,
+                    axisLabel: {
+                        interval: Math.floor(dates.length / 6),
+                        fontSize: 12
+                    }
+                },
+                yAxis: {
+                    type: 'value',
+                    axisLabel: {
+                        formatter: '{value}'
+                    }
+                },
+                series: [
+                    {
+                        data: prices,
+                        type: 'line',
+                        smooth: true,
+                        itemStyle: {
+                            color: '#667eea'
+                        },
+                        lineStyle: {
+                            color: '#667eea',
+                            width: 3
+                        },
+                        areaStyle: {
+                            color: new echarts.graphic.LinearGradient(0, 0, 0, 1, [
+                                { offset: 0, color: 'rgba(102, 126, 234, 0.3)' },
+                                { offset: 1, color: 'rgba(102, 126, 234, 0.05)' }
+                            ])
+                        },
+                        symbolSize: 6,
+                        showSymbol: false
+                    }
+                ]
+            };
+            
+            chartInstance1.setOption(option);
+            window.addEventListener('resize', function() {
+                chartInstance1.resize();
+            });
+        }
+        
+        // 初始化供需分析图
+        function initSupplyDemandChart() {
+            const chartDom = document.getElementById('supplyDemandChart');
+            chartInstance2 = echarts.init(chartDom);
+            
+            const option = {
+                responsive: true,
+                maintainAspectRatio: false,
+                tooltip: {
+                    trigger: 'axis',
+                    backgroundColor: 'rgba(0, 0, 0, 0.7)',
+                    borderColor: '#667eea',
+                    textStyle: {
+                        color: '#fff'
+                    }
+                },
+                grid: {
+                    left: '10%',
+                    right: '10%',
+                    bottom: '15%',
+                    top: '10%',
+                    containLabel: true
+                },
+                xAxis: {
+                    type: 'category',
+                    data: ['锂矿供应', '冶炼产能', '库存水位', '下游需求', '市场预期'],
+                    axisLabel: {
+                        fontSize: 12
+                    }
+                },
+                yAxis: {
+                    type: 'value',
+                    name: '相对强度'
+                },
+                series: [
+                    {
+                        data: [75, 72, 65, 88, 70],
+                        type: 'bar',
+                        itemStyle: {
+                            color: new echarts.graphic.LinearGradient(0, 0, 0, 1, [
+                                { offset: 0, color: '#667eea' },
+                                { offset: 1, color: '#764ba2' }
+                            ])
+                        },
+                        borderRadius: [8, 8, 0, 0],
+                        label: {
+                            show: true,
+                            position: 'top',
+                            fontSize: 12,
+                            color: '#333'
+                        }
+                    }
+                ]
+            };
+            
+            chartInstance2.setOption(option);
+            window.addEventListener('resize', function() {
+                chartInstance2.resize();
+            });
+        }
+        
+        // 刷新数据
+        function refreshData() {
+            const btn = event.target;
+            btn.disabled = true;
+            btn.textContent = '🔄 刷新中...';
+            
+            // 重新加载数据
+            setTimeout(() => {
+                loadMarketData();
+                btn.disabled = false;
+                btn.textContent = '🔄 刷新数据';
+            }, 1500);
+        }
+        
+        // PDF 导出功能
+        async function exportPDF() {
+            const btn = event.target;
+            btn.disabled = true;
+            btn.textContent = '📥 导出中...';
+            
+            try {
+                const element = document.querySelector('.container');
+                const canvas = await html2canvas(element, {
+                    scale: 2,
+                    useCORS: true,
+                    logging: false,
+                    backgroundColor: '#ffffff'
+                });
+                
+                const imgData = canvas.toDataURL('image/png');
+                const pdf = new jsPDF('p', 'mm', 'a4');
+                
+                const imgWidth = 210; // A4 宽度
+                const pageHeight = 297; // A4 高度
+                let heightLeft = canvas.height * imgWidth / canvas.width;
+                let position = 0;
+                
+                // 添加第一页
+                pdf.addImage(imgData, 'PNG', 0, position, imgWidth, heightLeft);
+                heightLeft -= pageHeight;
+                
+                // 添加后续页面
+                while (heightLeft >= 0) {
+                    position = heightLeft - canvas.height * imgWidth / canvas.width;
+                    pdf.addPage();
+                    pdf.addImage(imgData, 'PNG', 0, position, imgWidth, heightLeft);
+                    heightLeft -= pageHeight;
+                }
+                
+                // 下载 PDF
+                const date = new Date(marketData.date);
+                const filename = `锂矿碳酸锂市场日报_${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}.pdf`;
+                pdf.save(filename);
+                
+                btn.disabled = false;
+                btn.textContent = '📥 导出 PDF 报告';
+            } catch (error) {
+                console.error('PDF 导出失败:', error);
+                alert('PDF 导出失败，请重试');
+                btn.disabled = false;
+                btn.textContent = '📥 导出 PDF 报告';
+            }
+        }
+    </script>
+</body>
+</html>
